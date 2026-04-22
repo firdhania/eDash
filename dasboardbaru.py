@@ -104,8 +104,9 @@ with st.spinner("Loading data..."):
     delivery_review_df['delivery_days'] = (delivery_review_df['order_delivered_customer_date'] - 
                                             delivery_review_df['order_estimated_delivery_date']).dt.days
     
+    # PERUBAHAN WARNA: urutan warna hijau, biru, merah
     delivery_review_df['delivery_status'] = delivery_review_df['delivery_days'].apply(
-        lambda x: '🚀 Lebih Cepat' if x < 0 else ('⚠️ Terlambat' if x > 0 else '✅ Tepat Waktu')
+        lambda x: 'Lebih Cepat' if x < 0 else ('Terlambat' if x > 0 else 'Tepat Waktu')
     )
     
     # ============================================
@@ -183,8 +184,9 @@ if start_date and end_date and 'order_purchase_timestamp' in orders_df.columns:
     if len(filtered_delivery) > 0:
         filtered_delivery['delivery_days'] = (filtered_delivery['order_delivered_customer_date'] - 
                                                filtered_delivery['order_estimated_delivery_date']).dt.days
+        # PERUBAHAN WARNA: urutan warna hijau, biru, merah
         filtered_delivery['delivery_status'] = filtered_delivery['delivery_days'].apply(
-            lambda x: '🚀 Lebih Cepat' if x < 0 else ('⚠️ Terlambat' if x > 0 else '✅ Tepat Waktu')
+            lambda x: 'Lebih Cepat' if x < 0 else ('Terlambat' if x > 0 else 'Tepat Waktu')
         )
     else:
         filtered_delivery = pd.DataFrame()  # Empty dataframe if no data
@@ -220,10 +222,14 @@ if page == "🏠 Overview":
         
         with col1:
             st.subheader("📦 Status Pengiriman")
+            # PERUBAHAN WARNA: urutan Lebih Cepat (hijau), Tepat Waktu (biru), Terlambat (merah)
             status_counts = filtered_delivery['delivery_status'].value_counts()
+            # Reorder sesuai urutan yang diinginkan
+            order_status = ['Lebih Cepat', 'Tepat Waktu', 'Terlambat']
+            status_counts = status_counts.reindex(order_status)
             
             fig, ax = plt.subplots(figsize=(8, 6))
-            colors = ['#2ecc71', '#f39c12', '#e74c3c']
+            colors = ['#2ecc71', '#3498db', '#e74c3c']  # Hijau, Biru, Merah
             wedges, texts, autotexts = ax.pie(
                 status_counts.values, 
                 labels=status_counts.index, 
@@ -257,9 +263,10 @@ if page == "🏠 Overview":
         st.markdown("---")
         st.subheader("📌 Ringkasan Cepat")
         
-        faster_pct = (filtered_delivery[filtered_delivery['delivery_status'] == '🚀 Lebih Cepat'].shape[0] / len(filtered_delivery) * 100) if len(filtered_delivery) > 0 else 0
-        ontime_pct = (filtered_delivery[filtered_delivery['delivery_status'] == '✅ Tepat Waktu'].shape[0] / len(filtered_delivery) * 100) if len(filtered_delivery) > 0 else 0
-        late_pct = (filtered_delivery[filtered_delivery['delivery_status'] == '⚠️ Terlambat'].shape[0] / len(filtered_delivery) * 100) if len(filtered_delivery) > 0 else 0
+        # PERUBAHAN WARNA: menggunakan status tanpa emoji
+        faster_pct = (filtered_delivery[filtered_delivery['delivery_status'] == 'Lebih Cepat'].shape[0] / len(filtered_delivery) * 100) if len(filtered_delivery) > 0 else 0
+        ontime_pct = (filtered_delivery[filtered_delivery['delivery_status'] == 'Tepat Waktu'].shape[0] / len(filtered_delivery) * 100) if len(filtered_delivery) > 0 else 0
+        late_pct = (filtered_delivery[filtered_delivery['delivery_status'] == 'Terlambat'].shape[0] / len(filtered_delivery) * 100) if len(filtered_delivery) > 0 else 0
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -282,9 +289,10 @@ elif page == "📦 Analisis Pengiriman":
     else:
         col1, col2, col3 = st.columns(3)
         
-        faster_df = filtered_delivery[filtered_delivery['delivery_status'] == '🚀 Lebih Cepat']
-        ontime_df = filtered_delivery[filtered_delivery['delivery_status'] == '✅ Tepat Waktu']
-        late_df = filtered_delivery[filtered_delivery['delivery_status'] == '⚠️ Terlambat']
+        # PERUBAHAN WARNA: menggunakan status tanpa emoji
+        faster_df = filtered_delivery[filtered_delivery['delivery_status'] == 'Lebih Cepat']
+        ontime_df = filtered_delivery[filtered_delivery['delivery_status'] == 'Tepat Waktu']
+        late_df = filtered_delivery[filtered_delivery['delivery_status'] == 'Terlambat']
         
         with col1:
             st.metric("🚀 Lebih Cepat", f"{faster_df['review_score'].mean():.2f}" if not faster_df.empty else "N/A", 
@@ -300,9 +308,15 @@ elif page == "📦 Analisis Pengiriman":
         
         st.subheader("📊 Perbandingan Rata-rata Rating")
         
+        # PERUBAHAN WARNA: urutan Lebih Cepat (hijau), Tepat Waktu (biru), Terlambat (merah)
         avg_rating = filtered_delivery.groupby('delivery_status')['review_score'].mean().reset_index()
+        # Reorder sesuai urutan yang diinginkan
+        order_status = ['Lebih Cepat', 'Tepat Waktu', 'Terlambat']
+        avg_rating['delivery_status'] = pd.Categorical(avg_rating['delivery_status'], categories=order_status, ordered=True)
+        avg_rating = avg_rating.sort_values('delivery_status')
+        
         fig, ax = plt.subplots(figsize=(10, 6))
-        colors_bar = ['#2ecc71', '#f39c12', '#e74c3c']
+        colors_bar = ['#2ecc71', '#3498db', '#e74c3c']  # Hijau, Biru, Merah
         bars = ax.bar(avg_rating['delivery_status'], avg_rating['review_score'], color=colors_bar, edgecolor='black', linewidth=1.5)
         ax.set_ylim(0, 5.5)
         ax.set_ylabel('Rata-rata Rating (1-5)', fontsize=12)
@@ -323,7 +337,7 @@ elif page == "📦 Analisis Pengiriman":
             late_df['review_score'].dropna()
         ]
         bp = ax.boxplot(data_to_plot, labels=['🚀 Lebih Cepat', '✅ Tepat Waktu', '⚠️ Terlambat'], patch_artist=True)
-        colors_box = ['#2ecc71', '#f39c12', '#e74c3c']
+        colors_box = ['#2ecc71', '#3498db', '#e74c3c']  # Hijau, Biru, Merah
         for patch, color in zip(bp['boxes'], colors_box):
             patch.set_facecolor(color)
             patch.set_alpha(0.7)
@@ -529,9 +543,10 @@ elif page == "📈 Kesimpulan":
         # KESIMPULAN PERTANYAAN 1
         st.header("📦 Pertanyaan 1: Tingkat Kepuasan Customer Berdasarkan Waktu Pengiriman")
         
-        faster_rating = filtered_delivery[filtered_delivery['delivery_status'] == '🚀 Lebih Cepat']['review_score'].mean() if len(filtered_delivery[filtered_delivery['delivery_status'] == '🚀 Lebih Cepat']) > 0 else 0
-        late_rating = filtered_delivery[filtered_delivery['delivery_status'] == '⚠️ Terlambat']['review_score'].mean() if len(filtered_delivery[filtered_delivery['delivery_status'] == '⚠️ Terlambat']) > 0 else 0
-        ontime_rating = filtered_delivery[filtered_delivery['delivery_status'] == '✅ Tepat Waktu']['review_score'].mean() if len(filtered_delivery[filtered_delivery['delivery_status'] == '✅ Tepat Waktu']) > 0 else 0
+        # PERUBAHAN WARNA: menggunakan status tanpa emoji
+        faster_rating = filtered_delivery[filtered_delivery['delivery_status'] == 'Lebih Cepat']['review_score'].mean() if len(filtered_delivery[filtered_delivery['delivery_status'] == 'Lebih Cepat']) > 0 else 0
+        late_rating = filtered_delivery[filtered_delivery['delivery_status'] == 'Terlambat']['review_score'].mean() if len(filtered_delivery[filtered_delivery['delivery_status'] == 'Terlambat']) > 0 else 0
+        ontime_rating = filtered_delivery[filtered_delivery['delivery_status'] == 'Tepat Waktu']['review_score'].mean() if len(filtered_delivery[filtered_delivery['delivery_status'] == 'Tepat Waktu']) > 0 else 0
         
         col1, col2, col3 = st.columns(3)
         with col1:
